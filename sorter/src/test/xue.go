@@ -16,16 +16,15 @@ func (base *Base) Bar() {
 	fmt.Println("base Bar")
 }
 
-type Foo struct {
+type Bus struct {
 	Base
 }
 
-func (foo *Foo) Bar() {
+func (foo *Bus) Bar() {
 	foo.Base.Bar()
 	fmt.Println("Foo Bar")
 }
 
 func main() {
-	var f = new(Foo)
-
+	f := &Bus()
 }
