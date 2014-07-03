@@ -2,50 +2,33 @@ package ipc
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
-type Request struct {
-	Method string "method"
-	Params string "params"
-}
-type Response struct {
-	Code string "code"
-	Body string "body"
-}
-type Server interface {
-	Name() string
-	Handle(method, params string) *Response
+type IpcClient struct {
+	conn chan string
 }
 
-type IpcServer struct {
-	Server
+func NewIpcClient(server *IpcServer) *IpcClient {
+	c := server.Connect()
+	return &IpcClient{c}
 }
 
-func NewIpcServer(server Server) *IpcServer {
-	return &IpcServer{server}
+//IpcClient的关键函数就是Call()了，这个函数会将调用信息封装成一个JSON格式的字符
+//串发送到对应的channel，并等待获取反馈。
+func (client *IpcClient) Call(method, params string) (resp *Response, err error) {
+	req := &Request{method, params}
+	var b []byte
+	b, err = json.Marshal(req)
+	if err != nil {
+		return
+	}
+	client.conn <- string(b)
+	str := <-client.conn // 等待返回值
+	var resp1 Response
+	err = json.Unmarshal([]byte(str), &resp1)
+	resp = &resp1
+	return
 }
-
-func (server *IpcServer) Connect() chan string {
-	session := make(chan string, 0)
-
-	go func(c chan string) {
-		for {
-			request := <-c
-			if request == "CLOSE" { //// 关闭该连接
-				break
-			}
-			var req Request
-			err := json.Unmarshal([]byte(request), &req)
-			if err != nil {
-				fmt.Println("Invalid request format:", request)
-			}
-			resp := server.Handle(req.Method, req.Params)
-			b, err := json.Marshal(resp)
-			c <- string(b) // 返回结果
-		}
-		fmt.Println("Session closed.")
-	}(session)
-	fmt.Println("A new session has been created successfully.")
-	return session
+func (client *IpcClient) Close() {
+	client.conn <- "CLOSE"
 }
