@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"runtime"
+	"sync"
 )
 
 type Base struct {
@@ -21,10 +23,39 @@ type Bus struct {
 }
 
 func (foo *Bus) Bar() {
-	foo.Base.Bar()
+
 	fmt.Println("Foo Bar")
+	foo.Base.Bar()
+}
+
+func Count(ch chan int, wg *sync.WaitGroup) {
+	wg.Add(1)
+	//fmt.Println("Counting")
+	ch <- 1
+
+	fmt.Println("Counting")
+	wg.Done()
+}
+
+func tChannl() {
+	chs := make([]chan int, 10)
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		chs[i] = make(chan int)
+		go Count(chs[i], &wg)
+	}
+	for _, ch := range chs {
+		<-ch
+	}
+
+	wg.Wait()
 }
 
 func main() {
-	f := &Bus()
+	num := runtime.NumCPU()
+	fmt.Println("NumCPU = ", num)
+	runtime.GOMAXPROCS(num)
+
+	tSelect()
+
 }
