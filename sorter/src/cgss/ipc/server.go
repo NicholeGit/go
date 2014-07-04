@@ -36,9 +36,7 @@ func (server *IpcServer) Connect() chan string {
 				break
 			}
 			var req Request
-			fmt.Println("Unmarshal:" + request)
 			err := json.Unmarshal([]byte(request), &req)
-			//fmt.Println("Unmarshaled:" + req)
 			if err != nil {
 				fmt.Println("Invalid request format:", request)
 			}
