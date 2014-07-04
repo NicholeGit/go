@@ -69,6 +69,7 @@ func (server *CenterServer) listPlayer(params string) (players string, err error
 	}
 	return
 }
+
 func (server *CenterServer) broadcast(params string) error {
 	var message Message
 	err := json.Unmarshal([]byte(params), &message)
